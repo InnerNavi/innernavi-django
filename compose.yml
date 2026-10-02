@@ -1,0 +1,107 @@
+# LOCAL DEVELOPMENT ONLY. No production credentials/settings are configured.
+name: innernavi-django-local
+
+x-backend: &backend
+  image: innernavi-django-dev:foundation
+  platform: linux/amd64
+  build:
+    context: .
+    dockerfile: apps/backend/Dockerfile
+  environment:
+    DJANGO_SETTINGS_MODULE: config.settings.local
+    POSTGRES_DB: innernavi_local
+    POSTGRES_USER: innernavi_local
+    POSTGRES_PASSWORD: innernavi-dev-only
+    POSTGRES_HOST: postgres
+    POSTGRES_PORT: "5432"
+    REDIS_URL: redis://redis:6379/0
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  init: true
+
+services:
+  postgres:
+    image: postgres:17.11-bookworm@sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: innernavi_local
+      POSTGRES_USER: innernavi_local
+      POSTGRES_PASSWORD: innernavi-dev-only
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U innernavi_local -d innernavi_local"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    mem_limit: 512m
+
+  redis:
+    image: redis:7.4.11-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+    platform: linux/amd64
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:16379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    mem_limit: 256m
+
+  api:
+    <<: *backend
+    profiles: ["app"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+    mem_limit: 768m
+
+  worker:
+    <<: *backend
+    profiles: ["app"]
+    command: ["celery", "-A", "config.celery:app", "worker", "--loglevel=WARNING", "--concurrency=1", "--prefetch-multiplier=1", "--hostname=worker@%h"]
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config.celery:app inspect ping --destination=worker@$$HOSTNAME --timeout=3 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    mem_limit: 1536m
+
+  web:
+    profiles: ["app"]
+    image: innernavi-web-dev:foundation
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      API_PROXY_TARGET: http://api:8000
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+    init: true
+    mem_limit: 768m
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -34,4 +34,6 @@ Thumbs.db
 # Runtime
 *.log
 tmp/
+.tools/
+.cache/
 

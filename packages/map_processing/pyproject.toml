@@ -1,0 +1,17 @@
+[project]
+name = "innernavi-map-processing"
+version = "0.1.0"
+description = "Framework-independent image processing package boundary. M0 is not implemented."
+requires-python = ">=3.13.16,<3.14"
+dependencies = [
+    "numpy==2.5.3",
+    "opencv-python-headless==5.0.0.93",
+    "scikit-image==0.26.0",
+]
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/map_processing"]
