@@ -1,0 +1,1 @@
+"""InnerNavi application boundary."""

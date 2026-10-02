@@ -1,0 +1,2 @@
+# Keep Bash entry points LF-terminated after a Windows checkout.
+scripts/*.sh text eol=lf
