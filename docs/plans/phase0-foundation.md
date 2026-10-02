@@ -29,4 +29,6 @@
 
 AGENTS 라우팅·공통 명세 snapshot·Git Bash/Linux 공통 `verify.sh` 진입점·문서/비밀 검사·고의 실패 차단·기본 CI를 연결한다. 이후 AI 모의 테스트와 사람이 검수한 최신 SHA에만 병합 상태를 부여하는 설계를 검증한다. 실제 GitHub 설정 변경·키 발급·유료 호출은 별도 권한 범위다.
 
+2026-10-02 후속 작업에서 [작업 규칙](../../AGENTS.md)·[상세 절차](../runbooks/task-workflow.md)·[수동 PR 양식](../../.github/pull_request_template.md)을 문서화했다. 범위와 진행은 [규칙 문서화 계획](agent-rules.md)을 따른다. 명세 snapshot·검증 스크립트·CI·AI 리뷰·보호 설정은 여전히 미구현이다. 기반 작업 완료 이후에만 최신 `main`에서 `dev`를 만들며, 이번 문서화만으로 Phase 0 전체가 완료되는 것은 아니다.
+
 이 작업의 기초 pytest/Vitest는 전체 하네스 또는 M0 평가 세트가 아니다. 최종 M0/MVP 완료 게이트는 미구현 검사를 PASS로 처리하지 않는다.
